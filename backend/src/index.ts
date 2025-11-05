@@ -48,7 +48,7 @@ if (isProduction) {
 }
 
 // Health check endpoint
-app.get('/health', async (req: Request, res: Response) => {
+app.get('/health', async (_req: Request, res: Response) => {
   try {
     const dbHealth = await databaseService.getSystemHealth();
     const redisHealth = await redisService.getActiveUsersCount(); // Simple check
@@ -73,7 +73,7 @@ app.get('/health', async (req: Request, res: Response) => {
 });
 
 // Stats endpoint
-app.get('/stats', async (req: Request, res: Response) => {
+app.get('/stats', async (_req: Request, res: Response) => {
   try {
     const stats = await matchingService.getMatchingStats();
     res.json({
@@ -88,7 +88,7 @@ app.get('/stats', async (req: Request, res: Response) => {
 });
 
 // API info endpoint
-app.get('/', (req: Request, res: Response) => {
+app.get('/', (_req: Request, res: Response) => {
   res.json({
     name: 'Omegle Clone API',
     version: '1.0.0',
@@ -126,7 +126,11 @@ const gracefulShutdown = async (signal: string) => {
     // Cleanup services
     matchingService.cleanup();
     await redisService.disconnect();
-    await databaseService.disconnect();
+    try {
+      await databaseService.disconnect();
+    } catch (err) {
+      // Database might not be connected
+    }
 
     logger.info('Graceful shutdown completed');
     process.exit(0);
@@ -156,7 +160,13 @@ const startServer = async () => {
     // Connect to services
     logger.info('Connecting to services...');
     await redisService.connect();
-    await databaseService.connect();
+
+    // Try to connect to database (optional for demo)
+    try {
+      await databaseService.connect();
+    } catch (dbError) {
+      logger.warn('Database connection failed (running without PostgreSQL)', dbError);
+    }
 
     // Start cleanup interval
     setInterval(async () => {

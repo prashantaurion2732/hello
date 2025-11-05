@@ -1,4 +1,4 @@
-import { Pool, PoolClient } from 'pg';
+import { Pool } from 'pg';
 import { config } from '../config';
 import logger from '../utils/logger';
 import { Report } from '../types';
@@ -18,7 +18,7 @@ class DatabaseService {
       connectionTimeoutMillis: 2000,
     });
 
-    this.pool.on('error', (err) => {
+    this.pool.on('error', (err: Error) => {
       logger.error('Unexpected error on idle PostgreSQL client', err);
     });
   }
@@ -188,7 +188,7 @@ class DatabaseService {
         `SELECT * FROM reports WHERE reported_user_id = $1 ORDER BY timestamp DESC`,
         [userId]
       );
-      return result.rows.map(row => ({
+      return result.rows.map((row: any) => ({
         id: row.id,
         reporterId: row.reporter_id,
         reportedUserId: row.reported_user_id,
@@ -209,7 +209,7 @@ class DatabaseService {
         `SELECT * FROM reports WHERE resolved = FALSE ORDER BY timestamp DESC LIMIT $1`,
         [limit]
       );
-      return result.rows.map(row => ({
+      return result.rows.map((row: any) => ({
         id: row.id,
         reporterId: row.reporter_id,
         reportedUserId: row.reported_user_id,
